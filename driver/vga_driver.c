@@ -197,7 +197,7 @@ static int print_letter(const bool big_font, const unsigned int x_startPos, cons
 	for(y=y_startPos,i=0;y<y_startPos+step_y;++i,++y)
 		for(x=x_startPos,j=0;x<x_startPos+step_x;++j,++x)
 		{
-			u32 rgb = (big_font == true) ? big_letter : small_letter;
+			u32 rgb = (big_font == true) ? big_letter[i][j] : small_letter[i][j];
 			tx_vir_buffer[640*y + x] = rgb;
 		}
 	return 0;
@@ -228,10 +228,11 @@ static int commands(const char (*commands)[BUFF_SIZE] )
 			return -EINVAL;
 		
 		assign(big_font, *b_ptr, rgb_text, rgb_bckg);
-		print_letter(big_font, x_startPos, y_startPos);
+		print_letter(big_font, (u32)x_startPos, (u32)y_startPos);
 
 	}
 	return 0;
+
 }
 
 static ssize_t vga_dma_write(struct file *f, const char __user *buf, size_t length, loff_t *off)
