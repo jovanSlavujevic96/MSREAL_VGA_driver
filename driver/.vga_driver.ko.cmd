@@ -1,0 +1,1 @@
+cmd_/root/VGA_DriverApp/driver/vga_driver.ko := ld -r  -EL -T ./scripts/module-common.lds -T ./arch/arm/kernel/module.lds  --build-id  -o /root/VGA_DriverApp/driver/vga_driver.ko /root/VGA_DriverApp/driver/vga_driver.o /root/VGA_DriverApp/driver/vga_driver.mod.o ;  true
