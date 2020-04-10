@@ -1,15 +1,38 @@
-#include "functions.h"
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/fs.h>
+#include <linux/types.h>
+#include <linux/cdev.h>
+#include <linux/kdev_t.h>
+#include <linux/uaccess.h>
+#include <linux/errno.h>
+#include <linux/device.h>
+
+#include <linux/io.h> //iowrite ioread
+#include <linux/slab.h>//kmalloc kfree
+#include <linux/platform_device.h>//platform driver
+#include <linux/of.h>//of_match_table
+#include <linux/ioport.h>//ioremap
+
+#include <linux/dma-mapping.h>  //dma access
+#include <linux/mm.h>  //dma access
+#include <linux/interrupt.h>  //interrupt handlers
 
 MODULE_AUTHOR ("FTN");
 MODULE_DESCRIPTION("Test Driver for VGA controller IP.");
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_ALIAS("custom:vga_dma controller");
 
+#define BUFF_SIZE 100
 #define DEVICE_NAME "vga_dma"
 #define DRIVER_NAME "vga_dma_driver"
 #define MAX_PKT_LEN 640*480*4
 #define MAX_L 639
 #define MAX_H 479
+
+#include "letters.h"
 
 //*******************FUNCTION PROTOTYPES************************************
 static int vga_dma_probe(struct platform_device *pdev);
@@ -70,6 +93,9 @@ static struct platform_driver vga_dma_driver = {
 
 dma_addr_t tx_phy_buffer;
 u32 *tx_vir_buffer;
+static bool (*b_ptr)[7][5] = NULL;
+static u32 small_letter[7][5] = {{0}};
+static u32 big_letter[14][10] = {{0}};
 
 //***************************************************************************
 // PROBE AND REMOVE
@@ -173,6 +199,79 @@ static int vga_dma_close(struct inode *i, struct file *f)
 {
 	printk(KERN_INFO "vga_dma closed\n");
 	return 0;
+}
+
+static ssize_t vga_dma_read(struct file *f, char __user *buf, size_t len, loff_t *off)
+{
+	//printk("vga_dma read\n");
+	return 0;
+}
+
+static int choose_letter(const char letter)
+{
+    if((letter >= 'A' && letter <= 'Z') || (letter >= 'a' && letter <= 'z') || 
+        letter != ' ' || letter != '!' || letter != ',' || letter != '?' || letter != '.')
+    {   
+        return -1;
+    }
+    if(letter == 'A')
+        b_ptr = &A;
+
+    return 0;
+}
+
+static void doubleSizeMat(void)
+{
+	int i,j,c,d;
+	for(i=0;i<7;i++)
+		for(j=0;j<5;j++)
+			for(c=0;c<2;c++)
+				for(d=0;d<2;d++)
+					big_letter[2*i+c][2*j+d] = small_letter[i][j];
+}
+
+static void assign(bool set_big_letter, const bool (*letter)[5], const u32 col_let, const u32 col_bckg)
+{
+	int i,j;
+	for(i=0;i<7;i++)
+		for(j=0;j<5;j++)
+			small_letter[i][j] = (letter[i][j] == 1) ? col_bckg : col_let; 
+
+	if(set_big_letter)
+    {
+		doubleSizeMat();
+    }
+}
+
+static unsigned int strToInt(const char* str)
+{
+    int i;
+    int dec=1;
+    unsigned int val=0;
+    for(i=strlen(str)-1; i>=0; --i)
+    {
+        int a = (str[i]-48)*dec;
+        dec *= 10;
+        val += a;
+    }
+    return val;
+}
+
+static void assign_commands(const char* buff, char (*commands)[BUFF_SIZE])
+{
+    int i;
+	int incr=0;
+	int len = 0;
+	for(i=0;i<strlen(buff);++i)
+	{
+		if(buff[i] != ',')
+			commands[incr][i-len] = buff[i];
+		else if(buff[i] == ',')
+		{
+			len += strlen(commands[incr]) + 1;
+			incr++;
+		}
+	}
 }
 
 static int print_letter(const bool big_font, const unsigned int x_startPos, const unsigned int y_startPos)
