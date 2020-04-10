@@ -1,27 +1,4 @@
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/fs.h>
-#include <linux/types.h>
-#include <linux/cdev.h>
-#include <linux/kdev_t.h>
-#include <linux/uaccess.h>
-#include <linux/errno.h>
-#include <linux/device.h>
-
-#include <linux/io.h> //iowrite ioread
-#include <linux/slab.h>//kmalloc kfree
-#include <linux/platform_device.h>//platform driver
-#include <linux/of.h>//of_match_table
-#include <linux/ioport.h>//ioremap
-
-#include <linux/dma-mapping.h>  //dma access
-#include <linux/mm.h>  //dma access
-#include <linux/interrupt.h>  //interrupt handlers
-
-#define BUFF_SIZE 20
-#include "letters.h"
+#include "functions.h"
 
 MODULE_AUTHOR ("FTN");
 MODULE_DESCRIPTION("Test Driver for VGA controller IP.");
@@ -31,6 +8,8 @@ MODULE_ALIAS("custom:vga_dma controller");
 #define DEVICE_NAME "vga_dma"
 #define DRIVER_NAME "vga_dma_driver"
 #define MAX_PKT_LEN 640*480*4
+#define MAX_L 639
+#define MAX_H 479
 
 //*******************FUNCTION PROTOTYPES************************************
 static int vga_dma_probe(struct platform_device *pdev);
@@ -196,9 +175,62 @@ static int vga_dma_close(struct inode *i, struct file *f)
 	return 0;
 }
 
-static ssize_t vga_dma_read(struct file *f, char __user *buf, size_t len, loff_t *off)
+static int print_letter(const bool big_font, const unsigned int x_startPos, const unsigned int y_startPos)
 {
-	printk(KERN_INFO "vga_dma read\n");
+	int step_x, step_y;
+	int x,y,i,j;
+	if(big_font)
+	{
+		step_x = 10;
+		step_y = 14;
+	}
+	else
+	{
+		step_x = 5;
+		step_y = 7;
+	}
+	if ((x_startPos + step_x > MAX_L) || (y_startPos + step_y > MAX_H) )
+	{
+		printk(KERN_ERR "VGA_write:\nX_axis position can be: [0,639]\nY_axis position can be: [0,479]\n");
+		return -1;
+	}
+	for(y=y_startPos,i=0;y<y_startPos+step_y;++i,++y)
+		for(x=x_startPos,j=0;x<x_startPos+step_x;++j,++x)
+		{
+			u32 rgb = (big_font == true) ? big_letter : small_letter;
+			tx_vir_buffer[640*y + x] = rgb;
+		}
+	return 0;
+	
+}
+
+static int commands(const char (*commands)[BUFF_SIZE] )
+{
+	if(strlen(commands[0]) != 4)
+		return -EINVAL;
+	if(!strcmp(commands[0],"CHAR") || !strcmp(commands[0],"TEXT") )
+	{
+		bool big_font;
+		unsigned int x_startPos, y_startPos; 
+		unsigned long long rgb_text, rgb_bckg;
+
+		big_font = (!strcmp(commands[2],"big")) ? true : false;
+		if(!big_font && !strcmp(commands[2],"small") )
+			return -EINVAL;
+
+		x_startPos=strToInt(commands[3]);
+		y_startPos=strToInt(commands[4]);
+		
+		kstrtoull(commands[5], 0, &rgb_text);
+		kstrtoull(commands[6], 0, &rgb_bckg);
+
+		if( choose_letter(commands[1]) == -1 )
+			return -EINVAL;
+		
+		assign(big_font, *b_ptr, rgb_text, rgb_bckg);
+		print_letter(big_font, x_startPos, y_startPos);
+
+	}
 	return 0;
 }
 
@@ -206,43 +238,21 @@ static ssize_t vga_dma_write(struct file *f, const char __user *buf, size_t leng
 {	
 	char buff[BUFF_SIZE];
 	int ret = 0;
-	unsigned int xpos=0,ypos=0;
-	unsigned long long rgb=0;
-	unsigned char rgb_buff[10];
-
+	
 	ret = copy_from_user(buff, buf, length);  
 	if(ret){
 		printk("copy from user failed \n");
 		return -EFAULT;
 	}  
-	buff[length] = '\0';
+	buff[length] = 0;
 
+	char commands_[7][BUFF_SIZE] = {{0}};
+	assign_commands(buff, commands_);
+	ret = commands(commands_);
 
-	sscanf(buff,"%d,%d,%s", &xpos, &ypos, rgb_buff);  
-	ret = kstrtoull(rgb_buff, 0, &rgb);
-
-	if(ret != -EINVAL) //checking for parsing error
-	{
-		if (xpos > 639)
-		{
-			printk(KERN_WARNING "VGA_write: X_axis position exceeded, maximum is 639 and minimum 0 \n");
-		}
-		else if (ypos > 479)
-		{
-			printk(KERN_WARNING "VGA_write: Y_axis position exceeded, maximum is 479 and minimum 0 \n");
-		}
-		else
-		{
-			tx_vir_buffer[640*ypos + xpos] = (u32)rgb;
-		}
-	}
-	else
-	{
-		printk(KERN_WARNING "VGA_write: Wrong write format, expected \"xpos,ypos,rgb\"\n");
-		// return -EINVAL; //parsing error
-	}        
+	if(ret == -EINVAL)
+		return -EINVAL;      
 	return length;
-
 }
 
 static ssize_t vga_dma_mmap(struct file *f, struct vm_area_struct *vma_s)
