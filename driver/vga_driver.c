@@ -230,7 +230,7 @@ static ssize_t vga_dma_read(struct file *f, char __user *buf, size_t len, loff_t
 	return 0;
 }
 
-static void print_pix(const bool big_font, const unsigned int x_StartPos, const unsigned int y_StartPos, const unsigned int x_Step, const unsigned int y_Step, const unsigned long long Col_Bckg, const state_t state)
+static void print_pix_onScreen(const bool big_font, const unsigned int x_StartPos, const unsigned int y_StartPos, const unsigned int x_Step, const unsigned int y_Step, const unsigned long long Col_Bckg, const state_t state)
 {
 	unsigned int x,y,i,j;
 	if(state == state_TEXT)
@@ -305,7 +305,15 @@ struct Text
 	unsigned long long m_ColorLetter, m_ColorBckg;
 };
 
-static void initTextStruct(struct Text* text)
+static void printText(struct Text* text)
+{
+	printk("letters: %s\n",text->m_Letters);
+	printk("big font: %s\n", (text->m_BigFont == true) ? "true" : "false");
+	printk("x: %d , y: %d\n", text->m_Xstart, text->m_Ystart);
+	printk("letter col: %llu, bckg col: %llu\n", text->m_ColorLetter, text->m_ColorBckg);
+}
+
+static void initText(struct Text* text)
 {
 	int i;
 	for(i=0;i<BUFF_SIZE;++i)
@@ -318,8 +326,7 @@ static void initTextStruct(struct Text* text)
 static int setText(struct Text* text, const char(* commands)[BUFF_SIZE])
 {
 	int i;
-	initTextStruct(text);
-	for(i=0;i<strlen(text->m_Letters);++i)
+	for(i=0;i<strlen(commands[1]);++i)
 		text->m_Letters[i] = commands[1][i];
 	
 	if(!strcmp(commands[2],"big") || !strcmp(commands[2],"BIG") )
@@ -412,7 +419,7 @@ static int printWord(const struct Text* text, const state_t state)
 	{
 		set_character(text->m_Letters[i], &b_ptr);
 		assignValToCharacter(text->m_BigFont, text->m_ColorLetter, text->m_ColorBckg);
-		print_pix(text->m_BigFont, X, Y, x_step, y_step, text->m_ColorBckg, state);
+		print_pix_onScreen(text->m_BigFont, X, Y, x_step, y_step, text->m_ColorBckg, state);
 		X += x_step+1;
 		b_ptr = NULL;
 	}
@@ -425,7 +432,9 @@ static int assign_params_from_commands(const state_t state, const char(* command
         if(state == state_TEXT)
 	{
 		struct Text text;
+		initText(&text);
 		setText(&text, commands);
+		printText(&text);
 		ret = printWord(&text,state);
 	}
 	return ret;
