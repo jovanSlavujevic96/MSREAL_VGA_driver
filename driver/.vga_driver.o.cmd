@@ -14,8 +14,6 @@ deps_/root/MSREAL_VGA_driver/driver/vga_driver.o := \
     $(wildcard include/config/optimize/inlining.h) \
   include/linux/compiler-gcc.h \
     $(wildcard include/config/arch/use/builtin/bswap.h) \
-  /root/MSREAL_VGA_driver/driver/functions.h \
-  /root/MSREAL_VGA_driver/driver/letters.h \
   include/linux/kernel.h \
     $(wildcard include/config/lbdaf.h) \
     $(wildcard include/config/preempt/voluntary.h) \
@@ -874,6 +872,7 @@ deps_/root/MSREAL_VGA_driver/driver/vga_driver.o := \
   include/linux/irq_cpustat.h \
   arch/arm/include/asm/sections.h \
   include/asm-generic/sections.h \
+  /root/MSREAL_VGA_driver/driver/letters.h \
 
 /root/MSREAL_VGA_driver/driver/vga_driver.o: $(deps_/root/MSREAL_VGA_driver/driver/vga_driver.o)
 

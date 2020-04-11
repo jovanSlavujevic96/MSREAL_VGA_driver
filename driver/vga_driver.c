@@ -20,19 +20,27 @@
 #include <linux/mm.h>  //dma access
 #include <linux/interrupt.h>  //interrupt handlers
 
+#include "letters.h"
+
 MODULE_AUTHOR ("FTN");
 MODULE_DESCRIPTION("Test Driver for VGA controller IP.");
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_ALIAS("custom:vga_dma controller");
 
-#define BUFF_SIZE 100
 #define DEVICE_NAME "vga_dma"
 #define DRIVER_NAME "vga_dma_driver"
+#define BUFF_SIZE 50
 #define MAX_PKT_LEN 640*480*4
-#define MAX_L 639
+#define MAX_W 639
 #define MAX_H 479
 
-#include "letters.h"
+#define BIG_FONT_W 10
+#define BIG_FONT_H 14
+#define SMALL_FONT_W 5
+#define SMALL_FONT_H 7
+
+typedef int state_t;
+enum {state_TEXT, state_LINE, state_RECT, state_CIRC, state_PIX, state_ERR};
 
 //*******************FUNCTION PROTOTYPES************************************
 static int vga_dma_probe(struct platform_device *pdev);
@@ -93,9 +101,9 @@ static struct platform_driver vga_dma_driver = {
 
 dma_addr_t tx_phy_buffer;
 u32 *tx_vir_buffer;
-static bool (*b_ptr)[7][5] = NULL;
-static u32 small_letter[7][5] = {{0}};
-static u32 big_letter[14][10] = {{0}};
+static const bool((* b_ptr)[7][5]) = NULL;
+static unsigned long long small_letter[7][5] = {{0}};
+static unsigned long long big_letter[14][10] = {{0}};
 
 //***************************************************************************
 // PROBE AND REMOVE
@@ -191,167 +199,260 @@ static int vga_dma_remove(struct platform_device *pdev)
 // IMPLEMENTATION OF FILE OPERATION FUNCTIONS
 static int vga_dma_open(struct inode *i, struct file *f)
 {
-	printk(KERN_INFO "vga_dma opened\n");
+	printk(KERN_ERR "vga_dma opened\n");
 	return 0;
 }
 
 static int vga_dma_close(struct inode *i, struct file *f)
 {
-	printk(KERN_INFO "vga_dma closed\n");
+	printk(KERN_ERR "vga_dma closed\n");
 	return 0;
 }
 
 static ssize_t vga_dma_read(struct file *f, char __user *buf, size_t len, loff_t *off)
 {
-	//printk("vga_dma read\n");
+	printk(KERN_ERR "vga_dma read\n");
 	return 0;
 }
 
-static int choose_letter(const char letter)
+static void print_pix(const bool big_font, const unsigned int x_StartPos, const unsigned int y_StartPos, const unsigned int x_Step, const unsigned int y_Step)
 {
-    if((letter >= 'A' && letter <= 'Z') || (letter >= 'a' && letter <= 'z') || 
-        letter != ' ' || letter != '!' || letter != ',' || letter != '?' || letter != '.')
-    {   
-        return -1;
-    }
-    if(letter == 'A')
-        b_ptr = &A;
-
-    return 0;
+	unsigned int x,y,i,j;
+	
+	for(y=y_StartPos, i=0; i<y_Step; ++i,++y)
+		for(x=x_StartPos, j=0; j<x_Step; ++x,++j)
+		{
+			u32 rgb = (big_font == true) ? ((u32)big_letter[i][j]) : ((u32)small_letter[i][j]);
+			tx_vir_buffer[640*y + x] = rgb;
+		}
 }
 
-static void doubleSizeMat(void)
+static void parse_buffer(const char* buffer, char(* commands)[BUFF_SIZE])
 {
-	int i,j,c,d;
-	for(i=0;i<7;i++)
-		for(j=0;j<5;j++)
-			for(c=0;c<2;c++)
-				for(d=0;d<2;d++)
-					big_letter[2*i+c][2*j+d] = small_letter[i][j];
-}
-
-static void assign(bool set_big_letter, const bool (*letter)[5], const u32 col_let, const u32 col_bckg)
-{
-	int i,j;
-	for(i=0;i<7;i++)
-		for(j=0;j<5;j++)
-			small_letter[i][j] = (letter[i][j] == 1) ? col_bckg : col_let; 
-
-	if(set_big_letter)
-    {
-		doubleSizeMat();
-    }
-}
-
-static unsigned int strToInt(const char* str)
-{
-    int i;
-    int dec=1;
-    unsigned int val=0;
-    for(i=strlen(str)-1; i>=0; --i)
-    {
-        int a = (str[i]-48)*dec;
-        dec *= 10;
-        val += a;
-    }
-    return val;
-}
-
-static void assign_commands(const char* buff, char (*commands)[BUFF_SIZE])
-{
-    int i;
-	int incr=0;
-	int len = 0;
-	for(i=0;i<strlen(buff);++i)
+	int i, incr=0, len=0;
+	for(i=0;i<strlen(buffer);i++)
 	{
-		if(buff[i] != ',')
-			commands[incr][i-len] = buff[i];
-		else if(buff[i] == ',')
+		if(buffer[i] != ',' && buffer[i] != '\n')
+			commands[incr][i-len] = buffer[i];
+		else if(buffer[i] == ',')
 		{
 			len += strlen(commands[incr]) + 1;
 			incr++;
 		}
+		else if(buffer[i] == '\n')
+		{
+			break;
+		}
 	}
 }
 
-static int print_letter(const bool big_font, const unsigned int x_startPos, const unsigned int y_startPos)
+static unsigned int strToInt(const char* string_num)
 {
-	int step_x, step_y;
-	int x,y,i,j;
-	if(big_font)
+	int i,dec=1;
+	unsigned int val=0;
+	for(i=strlen(string_num)-1;i>=0;--i)
 	{
-		step_x = 10;
-		step_y = 14;
+		unsigned int tmp = (string_num[i]-48)*dec;
+		dec *= 10;
+		val += tmp;
 	}
-	else
+	return val;
+}
+
+static state_t getState(const char* command0)
+{
+	if(!strcmp(command0,"TEXT"))
+		return state_TEXT;
+	else if(!strcmp(command0,"LINE"))
+		return state_LINE;
+	else if(!strcmp(command0,"RECT"))
+		return state_RECT;
+	else if(!strcmp(command0,"CIRC"))
+		return state_CIRC;
+	else if(!strcmp(command0,"PIX"))
+		return state_PIX;
+	return state_ERR;
+}
+
+struct Text
+{
+	char m_Letters[BUFF_SIZE];
+	bool m_BigFont;
+	unsigned int m_Xstart, m_Ystart;
+	unsigned long long m_ColorLetter, m_ColorBckg;
+};
+
+void initTextStruct(struct Text* text)
+{
+	int i;
+	for(i=0;i<BUFF_SIZE;++i)
+		text->m_Letters[i] = 0;
+	text->m_BigFont = false;
+	text->m_Xstart = 0, text->m_Ystart=0;
+	text->m_ColorLetter=0, text->m_ColorBckg=0;
+}
+
+struct Text getText(const char(* commands)[BUFF_SIZE])
+{
+	int i;
+	struct Text text;
+	initTextStruct(&text);
+	for(i=0;i<strlen(commands[1]);++i)
+		text.m_Letters[i] = commands[1][i];
+	text.m_BigFont = (!strcmp(commands[2],"big")) ? true : false;
+	text.m_Xstart = strToInt(commands[3]);
+	text.m_Ystart = strToInt(commands[4]);
+	i=kstrtoull((unsigned char*)commands[5],0,&text.m_ColorLetter);
+	i=kstrtoull((unsigned char*)commands[6],0,&text.m_ColorBckg);
+	return text;
+}
+
+static int check_character(const char letter)
+{
+	if( !(letter >= 'A' && letter <= 'Z') && !(letter >= 'a' && letter <= 'z') &&
+		letter != ' ' && letter != '!' && letter != ',' && letter != '?' && letter != '.')
 	{
-		step_x = 5;
-		step_y = 7;
-	}
-	if ((x_startPos + step_x > MAX_L) || (y_startPos + step_y > MAX_H) )
-	{
-		printk(KERN_ERR "VGA_write:\nX_axis position can be: [0,639]\nY_axis position can be: [0,479]\n");
 		return -1;
 	}
-	for(y=y_startPos,i=0;y<y_startPos+step_y;++i,++y)
-		for(x=x_startPos,j=0;x<x_startPos+step_x;++j,++x)
-		{
-			u32 rgb = (big_font == true) ? big_letter[i][j] : small_letter[i][j];
-			tx_vir_buffer[640*y + x] = rgb;
-		}
 	return 0;
-	
 }
 
-static int commands(const char (*commands)[BUFF_SIZE] )
+static void set_character(const char letter, const bool(** ptr)[7][5])
 {
-	if(strlen(commands[0]) != 4)
-		return -EINVAL;
-	if(!strcmp(commands[0],"CHAR") || !strcmp(commands[0],"TEXT") )
+	if(letter == 'A')
+		*ptr = &A;
+	else if(letter == 'B')
+		*ptr = &B;
+	else if(letter == 'C')
+		*ptr = &C;
+	else if(letter == 'D')
+		*ptr = &D;
+	else if(letter == 'E')
+		*ptr = &E;
+	else if(letter == 'F')
+		*ptr = &F;
+	else if(letter == 'G')
+		*ptr = &G;
+	else if(letter == 'H')
+		*ptr = &H;
+	else if(letter == 'I')
+		*ptr = &I;
+	else if(letter == 'J')
+		*ptr = &J;
+	else if(letter == 'K')
+		*ptr = &K;
+	else if(letter == 'L')
+		*ptr = &L;
+	else if(letter == 'M')
+		*ptr = &M;
+	else if(letter == 'N')
+		*ptr = &N;
+	else if(letter == 'O')
+		*ptr = &O;
+	else if(letter == 'P')
+		*ptr = &P;
+	else if(letter == 'Q')
+		*ptr = &Q;
+	else if(letter == 'R')
+		*ptr = &R;
+	else if(letter == 'S')
+		*ptr = &S;
+	else if(letter == 'T')
+		*ptr = &T;
+}
+
+static void DoubleSizeMat(void)
+{
+	int i,j,c,d;
+	for(i=0;i<7;++i)
+		for(j=0;j<5;j++)
+			for(c=0;c<2;c++)
+				for(d=0;d<2;d++)
+					big_letter[2*i+c][2*j+d]=small_letter[i][j];
+}
+
+static void assignValToLetter(const bool big_letter, const unsigned long long color_letter, const unsigned long long color_bckg)
+{
+	int i,j;
+	for(i=0;i<7;++i)
+		for(j=0;j<5;++j)
+		{
+			small_letter[i][j] = ((*b_ptr)[i][j] == 1) ? color_bckg : color_letter;
+		}
+	if(big_letter)
 	{
-		bool big_font;
-		unsigned int x_startPos, y_startPos; 
-		unsigned long long rgb_text, rgb_bckg;
+		DoubleSizeMat();
+	}
+}
 
-		big_font = (!strcmp(commands[2],"big")) ? true : false;
-		if(!big_font && !strcmp(commands[2],"small") )
-			return -EINVAL;
+static int printWord(const struct Text text)
+{
+	unsigned int i, Y = text.m_Ystart, X=text.m_Xstart, strLen = strlen(text.m_Letters),
+	x_step = (text.m_BigFont == true) ? BIG_FONT_W : SMALL_FONT_W,
+	y_step = (text.m_BigFont == true) ? BIG_FONT_H : SMALL_FONT_H,
+	checkX = X + strLen * (x_step + 1) - 1,	checkY = Y + y_step;
+	bool error=false;
+	for(i=0; i<strLen; ++i)
+	{
+		if(check_character(text.m_Letters[i]) == -1)
+		{
+			printk(KERN_ERR "VGA_DMA: %c cant be printed on screen, there's not this character on our library!\n",text.m_Letters[i] );
+			error = true;	
+		}
+	}
 
-		x_startPos=strToInt(commands[3]);
-		y_startPos=strToInt(commands[4]);
-		
-		kstrtoull(commands[5], 0, &rgb_text);
-		kstrtoull(commands[6], 0, &rgb_bckg);
+	if(checkX > MAX_W || checkY > MAX_H)
+	{
+		printk(KERN_ERR "VGA_DMA: %s cant whole fit into screen!\n",text.m_Letters);
+		error = true;
+	}
 
-		if( choose_letter(commands[1]) == -1 )
-			return -EINVAL;
-		
-		assign(big_font, *b_ptr, rgb_text, rgb_bckg);
-		print_letter(big_font, (u32)x_startPos, (u32)y_startPos);
+	if(error)
+		return -1;
 
+	for(i=0;i<strLen;++i)
+	{
+		set_character(text.m_Letters[i], &b_ptr);
+		assignValToLetter(text.m_BigFont, text.m_ColorLetter, text.m_ColorBckg);
+		print_pix(text.m_BigFont, X, Y, x_step, y_step);
+		X += x_step + 1;
+		b_ptr = NULL;
 	}
 	return 0;
+}
 
+static int assign_params_from_commands(const state_t state, const char(* commands)[BUFF_SIZE])
+{
+	int ret=0;
+        if(state == state_TEXT)
+	{
+		printWord(getText(commands));
+	}
+	return ret;
 }
 
 static ssize_t vga_dma_write(struct file *f, const char __user *buf, size_t length, loff_t *off)
 {	
-	char buff[BUFF_SIZE];
+	char buff[2*BUFF_SIZE];
 	int ret = 0;
+	char commands[7][BUFF_SIZE] = {{0}};
+	state_t state;
+	int i;
 	
 	ret = copy_from_user(buff, buf, length);  
 	if(ret){
 		printk("copy from user failed \n");
 		return -EFAULT;
 	}  
-	buff[length] = 0;
+	buff[length] = '\0';
+	
+	parse_buffer(buff, commands);
+	for(i=0; i<7;++i)
+		printk("%d: %s\n", i, commands[i]);
 
-	char commands_[7][BUFF_SIZE] = {{0}};
-	assign_commands(buff, commands_);
-	ret = commands(commands_);
+	state = getState(commands[0]);
+	ret = assign_params_from_commands(state, commands);
 
-	if(ret == -EINVAL)
-		return -EINVAL;      
 	return length;
 }
 
