@@ -873,6 +873,7 @@ deps_/root/MSREAL_VGA_driver/driver/vga_driver.o := \
   arch/arm/include/asm/sections.h \
   include/asm-generic/sections.h \
   /root/MSREAL_VGA_driver/driver/letters.h \
+  /root/MSREAL_VGA_driver/driver/small_letters.h \
 
 /root/MSREAL_VGA_driver/driver/vga_driver.o: $(deps_/root/MSREAL_VGA_driver/driver/vga_driver.o)
 
