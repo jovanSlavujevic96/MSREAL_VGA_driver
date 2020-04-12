@@ -1,4 +1,5 @@
 #include <linux/kernel.h>
+
 #include <linux/string.h>
 #include <linux/module.h>
 #include <linux/init.h>
@@ -214,38 +215,35 @@ static int vga_dma_remove(struct platform_device *pdev)
 // IMPLEMENTATION OF FILE OPERATION FUNCTIONS
 static int vga_dma_open(struct inode *i, struct file *f)
 {
-	printk(KERN_ERR "vga_dma opened\n");
+	printk(KERN_INFO "vga_dma opened\n");
 	return 0;
 }
 
 static int vga_dma_close(struct inode *i, struct file *f)
 {
-	printk(KERN_ERR "vga_dma closed\n");
+	printk(KERN_INFO "vga_dma closed\n");
 	return 0;
 }
 
 static ssize_t vga_dma_read(struct file *f, char __user *buf, size_t len, loff_t *off)
 {
-	printk(KERN_ERR "vga_dma read\n");
+	printk(KERN_INFO "vga_dma read\n");
 	return 0;
 }
 
-static void print_pix_onScreen(const bool big_font, const unsigned int x_StartPos, const unsigned int y_StartPos, const unsigned int x_Step, const unsigned int y_Step, const unsigned long long Col_Bckg, const state_t state)
+static void Word_onScreen(const bool big_font, const unsigned int x_StartPos, const unsigned int y_StartPos, const unsigned int x_Step, const unsigned int y_Step, const unsigned long long Col_Bckg)
 {
 	unsigned int x,y,i,j;
-	if(state == state_TEXT)
-	{
-		for(y=y_StartPos, i=0; i<y_Step; ++i,++y)
-			for(x=x_StartPos, j=0; j<x_Step; ++x,++j)
-			{
-				u32 rgb = (big_font == true) ? ((u32)big_letter[i][j]) : ((u32)small_letter[i][j]);
-				tx_vir_buffer[640*y + x] = rgb;
-			}
-		x=x_StartPos+x_Step;
-		for(y=y_StartPos,i=0; i<y_Step; ++i,++y)
+	for(y=y_StartPos, i=0; i<y_Step; ++i,++y)
+		for(x=x_StartPos, j=0; j<x_Step; ++x,++j)
 		{
-			tx_vir_buffer[640*y + x] = (u32)Col_Bckg;
+			u32 rgb = (big_font == true) ? ((u32)big_letter[i][j]) : ((u32)small_letter[i][j]);
+			tx_vir_buffer[640*y + x] = rgb;
 		}
+	x=x_StartPos+x_Step;
+	for(y=y_StartPos,i=0; i<y_Step; ++i,++y)
+	{
+		tx_vir_buffer[640*y + x] = (u32)Col_Bckg;
 	}
 }
 
@@ -305,8 +303,9 @@ struct Text
 	unsigned long long m_ColorLetter, m_ColorBckg;
 };
 
-static void printText(struct Text* text)
+static void printText(const struct Text* text)
 {
+	printk("Text struct info:\n");
 	printk("letters: %s\n",text->m_Letters);
 	printk("big font: %s\n", (text->m_BigFont == true) ? "true" : "false");
 	printk("x: %d , y: %d\n", text->m_Xstart, text->m_Ystart);
@@ -390,12 +389,12 @@ static void assignValToCharacter(const bool big_letter, const unsigned long long
 	}
 }
 
-static int printWord(const struct Text* text, const state_t state)
+static int printWord(const struct Text* text)
 {
 	unsigned int i, Y = text->m_Ystart, X=text->m_Xstart, strLen = strlen(text->m_Letters),
 	x_step = (text->m_BigFont == true) ? BIG_FONT_W : SMALL_FONT_W,
 	y_step = (text->m_BigFont == true) ? BIG_FONT_H : SMALL_FONT_H,
-	checkX = X + strLen * (x_step+1) -1,	checkY = Y + y_step;
+	checkX = X + x_step, checkY = Y + y_step;
 	bool error=false;
 	for(i=0; i<strLen; ++i)
 	{
@@ -408,7 +407,7 @@ static int printWord(const struct Text* text, const state_t state)
 
 	if(checkX > MAX_W || checkY > MAX_H)
 	{
-		printk(KERN_ERR "VGA_DMA: %s cant whole fit into screen!\n",text->m_Letters);
+		printk(KERN_ERR "VGA_DMA: %s cant whole fit into screen by one or both axis!\n",text->m_Letters);
 		error = true;
 	}
 
@@ -419,24 +418,243 @@ static int printWord(const struct Text* text, const state_t state)
 	{
 		set_character(text->m_Letters[i], &b_ptr);
 		assignValToCharacter(text->m_BigFont, text->m_ColorLetter, text->m_ColorBckg);
-		print_pix_onScreen(text->m_BigFont, X, Y, x_step, y_step, text->m_ColorBckg, state);
+		Word_onScreen(text->m_BigFont, X, Y, x_step, y_step, text->m_ColorBckg);
 		X += x_step+1;
 		b_ptr = NULL;
+		if(X+x_step > MAX_W && i < strLen-1)
+		{
+			printk(KERN_ERR "VGA_DMA: %c cant whole fit into screen by x axis!\n",text->m_Letters[i]);
+			break;
+		}
 	}
 	return 0;
 }
 
+struct Line
+{
+	unsigned int m_Xstart, m_Ystart;
+	unsigned int m_Xend, m_Yend;
+	unsigned long long m_LineColor;
+	bool m_HorizontalLine;
+};
+
+void printLine(const struct Line* line)
+{
+	printk("Line info:\n");
+	printk("(%d,%d) <-> (%d,%d)\n",line->m_Xstart, line->m_Ystart, line->m_Xend, line->m_Xstart);
+	printk("line color: %llu\n", line->m_LineColor);
+	printk("line: %s\n", (line->m_HorizontalLine == true) ? "Horizontal" : "Vertical");
+}
+
+int setLine(struct Line* line, const char(* commands)[BUFF_SIZE] )
+{
+	int ret;
+	line->m_Xstart = strToInt(commands[1]);
+	line->m_Ystart = strToInt(commands[2]);
+	line->m_Xend   = strToInt(commands[3]);
+	line->m_Yend   = strToInt(commands[4]);
+	ret = kstrtoull((unsigned char*)commands[5],0,&line->m_LineColor);
+	
+	if(line->m_Ystart == line->m_Yend)
+		line->m_HorizontalLine = true;
+	else if(line->m_Xstart == line->m_Xend)
+		line->m_HorizontalLine = false;
+	else
+	{
+		printk(KERN_ERR "VGA_DMA: Line is nor horisontal nor vertical!\n");
+		return -1;
+	}
+	return 0;
+}
+
+void Line_onScreen(const struct Line* line)
+{
+	int i,start,end;
+	if(line->m_HorizontalLine)
+	{
+		if(line->m_Xend > line->m_Xstart)
+			start = line->m_Xstart,
+			end = line->m_Xend;
+		else
+			start = line->m_Xend,
+			end = line->m_Xstart;
+
+		for(i=start; i<=end; ++i)
+			tx_vir_buffer[640*line->m_Ystart + i] = (u32)line->m_LineColor;
+		return;
+	}
+	if(line->m_Yend > line->m_Ystart)
+		start = line->m_Ystart,
+		end = line->m_Yend;
+	else
+		start = line->m_Yend,
+		end = line->m_Ystart;
+	
+	for(i=start; i<=end; ++i)
+		tx_vir_buffer[640*i + line->m_Xstart] = (u32)line->m_LineColor;
+}
+
+struct Rect
+{
+	unsigned int m_XtopLeft, m_YtopLeft;
+	unsigned int m_XbottomRight, m_YbottomRight;
+	unsigned long long m_RectColor;
+	bool m_FillRect;
+};
+
+
+void printRect(const struct Rect* rect)
+{
+	printk("Rect info:\n");
+	printk("(%d,%d) <-> (%d,%d)\n",rect->m_XtopLeft, rect->m_YtopLeft, rect->m_XbottomRight, rect->m_YbottomRight);
+	printk("rect color: %llu\n", rect->m_RectColor);
+	printk("fill rect: %s\n", (rect->m_FillRect == true) ? "true" : "false");
+}
+
+int setRect(struct Rect* rect, const char(* commands)[BUFF_SIZE] )
+{
+	int ret;
+	rect->m_XtopLeft = strToInt(commands[1]);
+	rect->m_YtopLeft = strToInt(commands[2]);
+	rect->m_XbottomRight = strToInt(commands[3]);
+	rect->m_YbottomRight = strToInt(commands[4]);
+	ret = kstrtoull((unsigned char*)commands[5],0,&rect->m_RectColor);
+	
+	if(!strcmp(commands[6],"FILL") || !strcmp(commands[6],"fill"))
+		rect->m_FillRect = true;
+	else if(!strcmp(commands[6],"NO") || !strcmp(commands[6],"no"))
+		rect->m_FillRect = false;
+	else
+	{
+		printk(KERN_ERR "%s -> incorrect command!\n",commands[6]);
+		return -1;
+	}
+	return 0;
+}
+
+void Rect_onScreen(const struct Rect* rect)
+{
+	int i,j;
+	if(!rect->m_FillRect)
+	{
+		struct Line lines[4] = 
+		{ 
+			{rect->m_XtopLeft, rect->m_YtopLeft, rect->m_XbottomRight, rect->m_YtopLeft, rect->m_RectColor, true},
+			{rect->m_XtopLeft, rect->m_YtopLeft, rect->m_XtopLeft, rect->m_YbottomRight, rect->m_RectColor, false},
+			{rect->m_XtopLeft, rect->m_YbottomRight, rect->m_XbottomRight, rect->m_YbottomRight, rect->m_RectColor, true},
+			{rect->m_XbottomRight, rect->m_YtopLeft, rect->m_XbottomRight, rect->m_YbottomRight, rect->m_RectColor, false}
+		};
+		for(i=0;i<4;i++)
+			Line_onScreen(&lines[i]);
+		return;
+	}
+	for(i=rect->m_XtopLeft; i<=rect->m_XbottomRight; ++i)
+		for(j=rect->m_YtopLeft; j<=rect->m_YbottomRight; ++j)
+			tx_vir_buffer[640*j + i] = (u32)rect->m_RectColor;
+}
+/*
+float SQRT(float num)
+{
+	float sol;
+	if(num >= 1)
+	{
+		for(sol=1;sol<=num;sol += 0.01)
+		{
+			if(sol*sol >= num-0.1 && sol*sol <= num)
+				return sol;
+		}
+	}
+	for(sol=0; sol <= num; sol += 0.001)
+	{
+		if(sol*sol >= num-0.001)
+			return sol;
+	}
+}
+
+struct Circle
+{
+	unsigned int m_Cx, m_Cy;
+	unsigned int m_r;
+	unsigned long long m_CircleColor;
+	bool m_FillCircle;
+};
+
+void setCircle(struct Circle* circle, const char(* commands)[BUFF_SIZE])
+{
+	int ret;
+	circle->m_Cx = strToInt(commands[1]);
+	circle->m_Cy = strToInt(commands[2]);
+	circle->m_r = strToInt(commands[3]);
+	ret = kstrtoull((unsigned char*)commands[4],0, &circle->m_CircleColor);
+	if(ret)
+		return;
+	circle->m_FillCircle = (!strcmp(commands[5],"fill") || !strcmp(commands[5],"FILL")) ? true : false;
+}
+
+void draw_circle(const struct Circle* circ)
+{
+	unsigned int xx = circ->m_Cx - circ->m_r, x,y;
+	unsigned int yy = circ->m_Cy - circ->m_r;
+	float q;
+	int XX = circ->m_Cx - circ->m_r, YY = circ->m_Cy - circ->m_r;
+	if(XX < 0 || YY < 0)
+	{
+		printk(KERN_ERR "can fit whole on screen!\n");
+		return;
+	}
+
+	for(x = xx; x <= (xx+2*circ->m_r); ++x)
+		for(y = yy; y <= (yy+2*circ->m_r); ++y)
+		{
+			bool info;
+			q = SQRT((float)((circ->m_Cx-x)*(circ->m_Cx-x)+(circ->m_Cy-y)*(circ->m_Cy-y) )) ;
+			info = (circ->m_FillCircle == true) ? ( (circ->m_r*0.9 > q) ? true : false ) : ((circ->m_r*0.9 > q && circ->m_r*0.8 < q) ? true : false);
+			if(info)	
+			{
+				tx_vir_buffer[640*y + x] = (u32) circ->m_CircleColor;
+			}
+		}
+}
+*/
 static int assign_params_from_commands(const state_t state, const char(* commands)[BUFF_SIZE])
 {
 	int ret=0;
-        if(state == state_TEXT)
+	if(state == state_TEXT)
 	{
 		struct Text text;
 		initText(&text);
-		setText(&text, commands);
+		ret = setText(&text, commands);
+		if(ret == -1)
+			return ret;
 		printText(&text);
-		ret = printWord(&text,state);
+		ret = printWord(&text);
 	}
+	else if(state == state_LINE)
+	{
+		struct Line line;
+		ret = setLine(&line, commands);
+		if(ret == -1)
+			return ret;
+		printLine(&line);
+		Line_onScreen(&line);
+	}
+	else if(state == state_RECT)
+	{
+		struct Rect rect;
+		ret = setRect(&rect, commands);
+		if(ret == -1)
+			return ret;
+		printRect(&rect);
+		Rect_onScreen(&rect);
+	}
+	/*
+	else if(state == state_CIRC)
+	{
+		struct Circle circ;
+		setCircle(&circ, commands);
+		draw_circle(&circ);
+	}
+	*/
 	return ret;
 }
 
