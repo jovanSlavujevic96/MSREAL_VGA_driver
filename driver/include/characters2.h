@@ -1,3 +1,6 @@
+#ifndef MSREAL_VGA_DRIVER_DRIVER_INCLUDE_CHARACTERS2_H_
+#define MSREAL_VGA_DRIVER_DRIVER_INCLUDE_CHARACTERS2_H_
+
 static const bool a[7][5] =
 {
 	{1, 1, 1, 1, 1},
@@ -287,3 +290,5 @@ static const bool z[7][5] =
 	{1, 0, 1, 1, 1},
 	{1, 0, 0, 0, 1}
 };
+
+#endif //MSREAL_VGA_DRIVER_DRIVER_INCLUDE_CHARACTERS2_H_

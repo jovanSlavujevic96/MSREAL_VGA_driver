@@ -1,3 +1,6 @@
+#ifndef MSREAL_VGA_DRIVER_DRIVER_INCLUDE_CHARACTERS1_H_
+#define MSREAL_VGA_DRIVER_DRIVER_INCLUDE_CHARACTERS1_H_
+
 static const bool A[7][5] =
 {
 	{1, 0, 0, 0, 1},
@@ -343,3 +346,4 @@ static const bool questionnaire[7][5] =
 	{1, 1, 0, 1, 1},
 };
 
+#endif //MSREAL_VGA_DRIVER_DRIVER_INCLUDE_CHARACTERS1_H_
