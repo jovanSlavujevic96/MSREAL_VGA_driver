@@ -43,7 +43,7 @@ void RectOnScreen(const struct Rect* rect)
 			{{rect->pt2.x, rect->pt1.y}, {rect->pt2.x, rect->pt2.y}, rect->rect_color, false}
 		};
 		for(i=0;i<4;i++)
-			Line_onScreen(&lines[i]);
+			LineOnScreen(&lines[i]);
 		return;
 	}
 	if(rect->pt1.x < rect->pt2.x)

@@ -13,14 +13,8 @@ static struct Word
 {
 	char chars[BUFF_SIZE];
 	bool big_font;
-    Point pt;
+    	struct Point pt;
 	unsigned long long char_color, bckg_color;
 };
-
-//methods
-static void printWord(const struct Word* word);
-static void initWord(struct Word* word);
-static int setWord(struct Word* word, const char(* commands)[BUFF_SIZE] );
-static int WordOnScreen(const struct Word* word);
 
 #endif //MSREAL_VGA_DRIVER_DRIVER_INCLUDE_WORD_H_

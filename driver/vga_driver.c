@@ -21,11 +21,8 @@
 #include <linux/mm.h>  //dma access
 #include <linux/interrupt.h>  //interrupt handlers
 
-#include "include/PrintWord.h"
-#include "include/PrintLine.h"
-#include "include/PrintRect.h"
-#include "include/PrintCircle.h"
 #include "include/commands.h"
+
 
 MODULE_AUTHOR ("FTN");
 MODULE_DESCRIPTION("Test Driver for VGA controller IP.");

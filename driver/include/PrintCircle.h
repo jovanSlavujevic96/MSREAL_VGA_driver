@@ -1,4 +1,4 @@
-#include "PrintCircle.h"
+#include "Circle.h"
 
 void setCircle(struct Circle* circle, const char(* commands)[BUFF_SIZE])
 {

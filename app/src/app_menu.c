@@ -13,6 +13,8 @@ struct Point choose_point(const char* of_what)
     struct Point pt;
     printf("Enter the coordinates of %s with comma between then press <enter>: ", of_what);
     scanf("%d,%d",&pt.x,&pt.y);
+    
+    printf("x:%d,y:%d\n",pt.x,pt.y);
     return pt;
 }
 
@@ -101,11 +103,13 @@ void print_circle(const unsigned int solution)
     unsigned int r;
     printf("Enter the radius of circle: ");
     scanf("%d",&r);
+    printf("r: %d\n",r);
     const unsigned long long circle_color = choose_color("circle");
     const char* fill_circle = choose_fill("rectangle");
     if(solution > 0)
     {
-        approximate_circle(pt1.x, pt1.y, r, (!strcmp("fill", fill_circle)) ? true : false, circle_color);
+        approximate_circle(pt1.x, pt1.y, r, (!strcmp("fill", fill_circle) ? true : false), circle_color);
+	//krug(pt1.x,pt1.y,r,circle_color);
         return;
     }
     char command[BUFF_SIZE*2] = {0};

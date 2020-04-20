@@ -872,8 +872,19 @@ deps_/root/MSREAL_VGA_driver/driver/vga_driver.o := \
   include/linux/irq_cpustat.h \
   arch/arm/include/asm/sections.h \
   include/asm-generic/sections.h \
-  /root/MSREAL_VGA_driver/driver/letters.h \
-  /root/MSREAL_VGA_driver/driver/small_letters.h \
+  /root/MSREAL_VGA_driver/driver/include/commands.h \
+  /root/MSREAL_VGA_driver/driver/include/PrintWord.h \
+  /root/MSREAL_VGA_driver/driver/include/characters1.h \
+  /root/MSREAL_VGA_driver/driver/include/characters2.h \
+  /root/MSREAL_VGA_driver/driver/include/Word.h \
+  /root/MSREAL_VGA_driver/driver/include/Point.h \
+  /root/MSREAL_VGA_driver/driver/include/utils.h \
+  /root/MSREAL_VGA_driver/driver/include/PrintLine.h \
+  /root/MSREAL_VGA_driver/driver/include/Line.h \
+  /root/MSREAL_VGA_driver/driver/include/PrintRect.h \
+  /root/MSREAL_VGA_driver/driver/include/Rect.h \
+  /root/MSREAL_VGA_driver/driver/include/PrintCircle.h \
+  /root/MSREAL_VGA_driver/driver/include/Circle.h \
 
 /root/MSREAL_VGA_driver/driver/vga_driver.o: $(deps_/root/MSREAL_VGA_driver/driver/vga_driver.o)
 

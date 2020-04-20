@@ -1,8 +1,7 @@
-#include "utils.h"
-#include "Word.h"
-#include "Line.h"
-#include "Rect.h"
-#include "Circle.h"
+#include "PrintWord.h"
+#include "PrintLine.h"
+#include "PrintRect.h"
+#include "PrintCircle.h"
 
 static int assign_params_from_commands(const state_t state, const char(* commands)[BUFF_SIZE])
 {
@@ -40,6 +39,15 @@ static int assign_params_from_commands(const state_t state, const char(* command
 		struct Circle circle;
 		setCircle(&circle, commands);
 		CircleOnScreen(&circle);
+	}
+	else if(state == state_PIX)
+	{
+		printk(KERN_INFO "jovan\n");
+		unsigned int x=strToInt(commands[1]),
+		y = strToInt(commands[2]);
+		unsigned long long pix_color;
+		ret = kstrtoull((unsigned char*)commands[3],0,&pix_color);
+		tx_vir_buffer[640*y+x] = (u32)pix_color;
 	}
 	return ret;
 }

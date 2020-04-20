@@ -1,5 +1,6 @@
 #include "characters1.h"
 #include "characters2.h"
+
 #include "Word.h"
 #include "utils.h"
 
@@ -36,7 +37,7 @@ static void initWord(struct Word* word)
 	for(i=0;i<BUFF_SIZE;++i)
 		word->chars[i] = 0;
 	word->big_font = false;
-	word->p.x = 0, word->p.y=0;
+	word->pt.x = 0, word->pt.y=0;
 	word->char_color=0, word->bckg_color=0;
 }
 
