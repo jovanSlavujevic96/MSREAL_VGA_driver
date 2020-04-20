@@ -112,7 +112,7 @@ void print_circle(const unsigned int solution)
         return;
     }
     char command[BUFF_SIZE*2] = {0};
-    sprintf(command,"rect;%d;%d;%d;%#04llx;%s\n",pt1.x,pt1.y,r,circle_color,fill_circle);
+    sprintf(command,"circ;%d;%d;%d;%#04llx;%s\n",pt1.x,pt1.y,r,circle_color,fill_circle);
     sendToDriver(command);
     delay2sec;
     return;
