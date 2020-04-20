@@ -109,7 +109,6 @@ void print_circle(const unsigned int solution)
     if(solution > 0)
     {
         approximate_circle(pt1.x, pt1.y, r, (!strcmp("fill", fill_circle) ? true : false), circle_color);
-	//krug(pt1.x,pt1.y,r,circle_color);
         return;
     }
     char command[BUFF_SIZE*2] = {0};
