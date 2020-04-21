@@ -12,7 +12,7 @@ void setCircle(struct Circle* circle, const char(* commands)[BUFF_SIZE])
 	circle->fill_circle = (!strcmp(commands[5],"fill") || !strcmp(commands[5],"FILL")) ? true : false;
 }
 
-struct _8points SetOfCirclePoints(int xc, int yc, int x, int, y)
+struct _8points SetOfCirclePoints(int xc, int yc, int x, int y)
 {
 	struct _8points pts;
 	pts.pt[0].x = xc+x;
@@ -42,51 +42,38 @@ struct _8points SetOfCirclePoints(int xc, int yc, int x, int, y)
 	return pts;
 }
 
+void fill8points(const struct _8points* pts, const bool fill, const unsigned long long color)
+{
+	int j,k;
+	if(pts == NULL)
+		return;
+	for(j=0; j<4; ++j)
+	{
+		tx_vir_buffer[640*pts->pt[2*j].y + pts->pt[2*j].x] = (u32)color;
+		tx_vir_buffer[640*pts->pt[2*j].y + pts->pt[2*j+1].x] = (u32)color;
+		if(fill)	
+			for(k=pts->pt[2*j+1].x+1;k<pts->pt[2*j].x;++k)
+				tx_vir_buffer[640*pts->pt[2*j].y + k] = (u32)color;			
+	}
+}
+
 void CircleOnScreen(const struct Circle* circle)
 {
 	int x = 0, y = circle->r;
 	int d = 3 - 2 * circle->r;
-	unsigned int incr = 1, i,j,k;
-	struct _8points base = SetOfCirclePoints(circle->pt.x,circle->pt.y,x,y);
-	struct _8points *dynamic_array;
-	while(y >= x)
-	{
-		++incr;
-		++x;
-		if(d > 0)
-			--y;
-	}
-	dynamic_array = (struct _8points*)malloc(incr*sizeof(struct _8points));
-	dynamic_array[0] = base;
-	x = 0, y = circle->r;
-	d = 3 - 2 * circle->r;
-	i = 1;
+	struct _8points tmp = SetOfCirclePoints(circle->pt.x,circle->pt.y,x,y);
+	fill8points(&tmp,circle->fill_circle, circle->circle_color);
 	while(y >= x)
 	{
 		++x;
 		if(d > 0)
 		{
 			--y;
-			d = d + 4*(x-y) + 10;
+			d = d + 4*(x-y) +10;
 		}
 		else
-			d = d + 4*x + 6;
-		dynamic_array[incr] = SetOfCirclePoints(circle->pt.x,circle->pt.y,x,y);
-		++incr
+			d = d + 4*x +6;
+		tmp = SetOfCirclePoints(circle->pt.x,circle->pt.y,x,y);
+		fill8points(&tmp,circle->fill_circle, circle->circle_color);
 	}
-	for(i=0; i<incr; ++i)
-	{
-		for(j=0; j<4; ++j)
-			if(circle->fill_circle == false)
-			{
-				tx_vir_buffer[640*dynamic_array[i].pt[2*j].y + dynamic_array[i].pt[2*j].x] = (u32)circle->circle_color;
-				tx_vir_buffer[640*dynamic_array[i].pt[2*j+1].y + dynamic_array[i].pt[2*j].x] = (u32)circle->circle_color;
-			}
-			else
-				for(k=dynamic_array[i].pt[2*j+1].x; k<=dynamic_array[i].pt[2*j].x; ++k)
-				{
-					tx_vir_buffer[640*dynamic_array[i].pt[2*j].y + k] = (u32)circle->circle_color;
-				}
-	}
-
 }

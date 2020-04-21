@@ -42,10 +42,9 @@ static int assign_params_from_commands(const state_t state, const char(* command
 	}
 	else if(state == state_PIX)
 	{
-		printk(KERN_INFO "jovan\n");
+		unsigned long long pix_color;
 		unsigned int x=strToInt(commands[1]),
 		y = strToInt(commands[2]);
-		unsigned long long pix_color;
 		ret = kstrtoull((unsigned char*)commands[3],0,&pix_color);
 		tx_vir_buffer[640*y+x] = (u32)pix_color;
 	}

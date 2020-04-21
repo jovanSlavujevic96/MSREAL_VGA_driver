@@ -60,9 +60,9 @@ __attribute__((section("__versions"))) = {
 	{ 0xedc03953, "iounmap" },
 	{ 0xc1514a3b, "free_irq" },
 	{ 0x822137e2, "arm_heavy_mb" },
-	{ 0x97255bdf, "strlen" },
-	{ 0xefd6cf06, "__aeabi_unwind_cpp_pr0" },
 	{ 0x7c32d0f0, "printk" },
+	{ 0xefd6cf06, "__aeabi_unwind_cpp_pr0" },
+	{ 0x97255bdf, "strlen" },
 };
 
 static const char __module_depends[]

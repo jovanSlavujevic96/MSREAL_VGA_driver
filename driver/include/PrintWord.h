@@ -22,14 +22,6 @@ static const char letters[] =
 	',','.',' ','?','!'
 };
 
-static void printWord(const struct Word* word)
-{
-	printk("Word struct info:\n");
-	printk("letters: %s\n",word->chars);
-	printk("big font: %s\n", (word->big_font == true) ? "true" : "false");
-	printk("x: %d , y: %d\n", word->pt.x, word->pt.y);
-	printk("letter col: %llu, bckg col: %llu\n", word->char_color, word->bckg_color);
-}
 
 static void initWord(struct Word* word)
 {

@@ -37,10 +37,10 @@ void RectOnScreen(const struct Rect* rect)
 	{
 		struct Line lines[4] = 
 		{ 
-			{{rect->pt1.x, rect->pt1.y}, {rect->pt2.x, rect->pt1.y}, rect->rect_color, true},
-			{{rect->pt1.x, rect->pt1.y}, {rect->pt1.x, rect->pt2.y}, rect->rect_color, false},
-			{{rect->pt1.x, rect->pt2.y}, {rect->pt2.x, rect->pt2.y}, rect->rect_color, true},
-			{{rect->pt2.x, rect->pt1.y}, {rect->pt2.x, rect->pt2.y}, rect->rect_color, false}
+			{{rect->pt1.x, rect->pt1.y}, {rect->pt2.x, rect->pt1.y}, rect->rect_color},
+			{{rect->pt1.x, rect->pt1.y}, {rect->pt1.x, rect->pt2.y}, rect->rect_color},
+			{{rect->pt1.x, rect->pt2.y}, {rect->pt2.x, rect->pt2.y}, rect->rect_color},
+			{{rect->pt2.x, rect->pt1.y}, {rect->pt2.x, rect->pt2.y}, rect->rect_color}
 		};
 		for(i=0;i<4;i++)
 			LineOnScreen(&lines[i]);

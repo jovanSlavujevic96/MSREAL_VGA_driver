@@ -115,7 +115,6 @@ void print_circle(const unsigned int solution)
     sprintf(command,"circ;%d;%d;%d;%#04llx;%s\n",pt1.x,pt1.y,r,circle_color,fill_circle);
     sendToDriver(command);
     delay2sec;
-    return;
 }
 
 void cases(const unsigned int Case, bool* Out)
@@ -135,7 +134,7 @@ void cases(const unsigned int Case, bool* Out)
         break;
 
         case 4:
-            print_circle(33);
+            print_circle(0);
         break;
 
         case 5:
