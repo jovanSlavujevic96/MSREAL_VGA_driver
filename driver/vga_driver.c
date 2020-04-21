@@ -23,7 +23,6 @@
 
 #include "include/commands.h"
 
-
 MODULE_AUTHOR ("FTN");
 MODULE_DESCRIPTION("Test Driver for VGA controller IP.");
 MODULE_LICENSE("Dual BSD/GPL");

@@ -1,1 +1,0 @@
-cmd_/root/jovan/MSREAL_VGA_driver/driver/vga_driver.ko := ld -r  -EL -T ./scripts/module-common.lds -T ./arch/arm/kernel/module.lds  --build-id  -o /root/jovan/MSREAL_VGA_driver/driver/vga_driver.ko /root/jovan/MSREAL_VGA_driver/driver/vga_driver.o /root/jovan/MSREAL_VGA_driver/driver/vga_driver.mod.o ;  true
