@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "unistd.h": "c",
+        "app_utils.h": "c",
+        "app_menu.h": "c"
+    }
+}

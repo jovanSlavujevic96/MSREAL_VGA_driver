@@ -1,6 +1,8 @@
 #include "include/app_menu.h"
 #include "include/app_utils.h"
 
+#include <stdio.h>
+
 int main(void)
 {
     printf("Welcome to VGA driver test application!\n");

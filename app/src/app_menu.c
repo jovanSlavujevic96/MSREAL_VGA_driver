@@ -1,6 +1,12 @@
+#include <stdio.h>
+#include <string.h>
+
+#include <unistd.h> //for usleep
+
 #include "../include/app_menu.h"
 #include "../include/colors.h"
 #include "../include/app_utils.h"
+#include "../include/Point.h"
 
 #define new_line printf("\n")
 #define delay2sec usleep(2000000)
@@ -8,7 +14,7 @@
 static const char color_str[9][9] = {"Black","White","Red","Blue","Green","Yellow","Gray","Brown","Purple"};
 static const unsigned long color_val[9] = {black, white, red, blue, green, yellow, gray, brown, purple};
 
-struct Point choose_point(const char* of_what)
+static inline struct Point choose_point(const char* of_what)
 {
     struct Point pt;
     printf("Enter the coordinates of %s with comma between then press <enter>: ", of_what);
@@ -18,7 +24,7 @@ struct Point choose_point(const char* of_what)
     return pt;
 }
 
-unsigned long long choose_color(const char* of_what)
+static inline unsigned long long choose_color(const char* of_what)
 {
     int tmp;
     printf("Choose color of %s by typing option number:\n\
@@ -29,7 +35,7 @@ unsigned long long choose_color(const char* of_what)
     return color_val[tmp-1];
 }
 
-const char* choose_fill(const char* what)
+static inline const char* choose_fill(const char* what)
 {
     printf("Do you want to fill the %s?\nPress <Y> or <N>: ", what);
     char tmp=0;
@@ -38,7 +44,7 @@ const char* choose_fill(const char* what)
     return (tmp == 'n' || tmp == 'N') ? "no" : "fill";
 }
 
-void print_character(void)
+static inline void print_character(void)
 {
     char string[BUFF_SIZE]={0};
     unsigned long long char_color=choose_color("character/s"), bckg_color; 
@@ -75,7 +81,7 @@ void print_character(void)
     delay2sec;
 }
 
-void print_line(void)
+static inline void print_line(void)
 {
     const struct Point pt1 = choose_point("start of line"), pt2 = choose_point("end of line");
     const unsigned long long line_color = choose_color("line");
@@ -85,7 +91,7 @@ void print_line(void)
     delay2sec;
 }
 
-void print_rectangle(void)
+static inline void print_rectangle(void)
 {
     const struct Point pt1 = choose_point("start of rectangle"), pt2 = choose_point("end of rectangle");
     const unsigned long long rectangle_color = choose_color("rectangle");
@@ -97,7 +103,7 @@ void print_rectangle(void)
     delay2sec;
 }
 
-void print_circle(const unsigned int solution)
+static inline void print_circle(const unsigned int solution)
 {
     const struct Point pt1 = choose_point("center of circle");
     unsigned int r;
@@ -106,11 +112,6 @@ void print_circle(const unsigned int solution)
     printf("r: %d\n",r);
     const unsigned long long circle_color = choose_color("circle");
     const char* fill_circle = choose_fill("rectangle");
-    if(solution > 0)
-    {
-        approximate_circle(pt1.x, pt1.y, r, (!strcmp("fill", fill_circle) ? true : false), circle_color);
-        return;
-    }
     char command[BUFF_SIZE*2] = {0};
     sprintf(command,"circ;%d;%d;%d;%#04llx;%s\n",pt1.x,pt1.y,r,circle_color,fill_circle);
     sendToDriver(command);
