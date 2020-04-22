@@ -1,4 +1,4 @@
-# MSREAL_VGA_driver
+### MSREAL_VGA_driver
 
 # driver user manual:
 # 1.go to driver dir:                            $ cd driver/
