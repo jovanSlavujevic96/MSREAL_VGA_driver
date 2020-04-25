@@ -1,10 +1,10 @@
 # MSREAL_VGA_driver
 
-## driver user manual:
+### driver user manual:
 ```
 1.go to driver dir:                            $ cd driver/
 2.for building code and turning on driver run: $ ./run_driver.sh  
-#this script shall do make command, remove unnecessary output files and rmmod and insmod driver output file (.ko)
+this script shall do make command, remove unnecessary output files and rmmod and insmod driver output file (.ko)
 3.commands for checking driver:
      3a. example of printing letter/s:          $ echo "text;STRING;big;5;5;0xff;0x00" >> /dev/vga_dma
                                                 @text/TEXT - indicator of printing charactes
