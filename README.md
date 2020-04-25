@@ -27,10 +27,10 @@
                                                 @0xff - hex rgb val of color of rectangle
                                                 @fill/FILL/no/NO - indicator of filling or not filling rectangle with color
 
-###     3d. example of drawing circle:             $ echo "circ;60;60;30;0xff;fill" >> /dev/vga_dma 
-###                                                @circ/CIRC - indicator of drawing circle
-###                                                @60;60 - x and y coordinates of center point of the circle
-###                                                @30 - radius of the circle
-###                                                @0xff - hex rgb val of color of circle
-###                                                @fill/FILL - indicator of filling or not filling circle with color
+     3d. example of drawing circle:             $ echo "circ;60;60;30;0xff;fill" >> /dev/vga_dma 
+                                                @circ/CIRC - indicator of drawing circle
+                                                @60;60 - x and y coordinates of center point of the circle
+                                                @30 - radius of the circle
+                                                @0xff - hex rgb val of color of circle
+                                                @fill/FILL - indicator of filling or not filling circle with color
 ```
