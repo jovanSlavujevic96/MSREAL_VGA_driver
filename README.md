@@ -1,9 +1,8 @@
 # MSREAL_VGA_driver
 
-### installation of Linux OS on DIGILENT Zybo Board:
-## https://www.elektronika.ftn.uns.ac.rs/mikroracunarski-sistemi-za-rad-u-realnom-vremenu/wp-content/uploads/sites/99/2018/03/Vezba12_Instaliranje_Linux-a_na_Zybo_ploci_na_primeru_DMA_VGA.pdf
+#### installation of Linux OS on DIGILENT Zybo Board [here](https://www.elektronika.ftn.uns.ac.rs/mikroracunarski-sistemi-za-rad-u-realnom-vremenu/wp-content/uploads/sites/99/2018/03/Vezba12_Instaliranje_Linux-a_na_Zybo_ploci_na_primeru_DMA_VGA.pdf)
 
-### driver user manual:
+### user manual:
 ```
 1.go to driver dir:                            $ cd driver/
 2.for building code and turning on driver run: $ ./run_driver.sh  
