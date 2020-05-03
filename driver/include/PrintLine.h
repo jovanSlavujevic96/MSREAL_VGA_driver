@@ -24,7 +24,7 @@ void LineOnScreen(const struct Line* line)
 	if(line->pt1.x > line->pt2.x)
 	{
 		x = line->pt2.x;
-       		y = line->pt2.y;
+		y = line->pt2.y;
 		x_lim = line->pt1.x;
 	}
 	if(!(y==line->pt1.y && line->pt1.y<=line->pt2.y) && !(y==line->pt2.y && line->pt2.y<=line->pt1.y))
@@ -32,7 +32,7 @@ void LineOnScreen(const struct Line* line)
 
 	p = 2*dy-dx;
 	
-	while(x<x_lim)
+	while(x<=x_lim && y > 0)
 	{
 
 		tx_vir_buffer[640*y+x]=(u32)line->line_color;
@@ -40,6 +40,7 @@ void LineOnScreen(const struct Line* line)
 			y+=incr, p=p+ 2*dy - 2*dx;
 		else
 			p=p + 2*dy;
-		x++;
+		if(line->pt2.x != line->pt1.x)
+			x++;
 	}	
 }
