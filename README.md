@@ -1,6 +1,6 @@
 # MSREAL_VGA_driver
 
-##### installation of Linux OS on DIGILENT Zybo Board cam be [here - VGA DMA](https://www.elektronika.ftn.uns.ac.rs/mikroracunarski-sistemi-za-rad-u-realnom-vremenu/wp-content/uploads/sites/99/2018/03/Vezba12_Instaliranje_Linux-a_na_Zybo_ploci_na_primeru_DMA_VGA.pdf) and [here - VGA BRAM](https://www.elektronika.ftn.uns.ac.rs/mikroracunarski-sistemi-za-rad-u-realnom-vremenu/wp-content/uploads/sites/99/2018/03/Vezba11_Instaliranje_Linux-a_na_Zybo_ploci_na_primeru_BRAM_VGA.pdf)
+##### installation of Linux OS on DIGILENT Zybo Board can be [here - VGA DMA](https://www.elektronika.ftn.uns.ac.rs/mikroracunarski-sistemi-za-rad-u-realnom-vremenu/wp-content/uploads/sites/99/2018/03/Vezba12_Instaliranje_Linux-a_na_Zybo_ploci_na_primeru_DMA_VGA.pdf) and [here - VGA BRAM](https://www.elektronika.ftn.uns.ac.rs/mikroracunarski-sistemi-za-rad-u-realnom-vremenu/wp-content/uploads/sites/99/2018/03/Vezba11_Instaliranje_Linux-a_na_Zybo_ploci_na_primeru_BRAM_VGA.pdf)
 ##### boot files can be found [here](https://github.com/KELembeded/vezba12)
 
 ### user manual:
